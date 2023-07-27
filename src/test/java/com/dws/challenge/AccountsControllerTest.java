@@ -31,7 +31,7 @@ class AccountsControllerTest {
 
   @Autowired
   private AccountsService accountsService;
-
+  
   @Autowired
   private WebApplicationContext webApplicationContext;
 
@@ -102,4 +102,6 @@ class AccountsControllerTest {
       .andExpect(
         content().string("{\"accountId\":\"" + uniqueAccountId + "\",\"balance\":123.45}"));
   }
+  
+  
 }
