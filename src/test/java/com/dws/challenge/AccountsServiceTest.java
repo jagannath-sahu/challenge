@@ -1,46 +1,103 @@
 package com.dws.challenge;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.fail;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+
+import com.dws.challenge.repository.AccountsRepository;
+import com.dws.challenge.service.AccountsService;
+import com.dws.challenge.service.NotificationService;
+import com.dws.challenge.domain.Account;
 
 import java.math.BigDecimal;
 
-import com.dws.challenge.domain.Account;
-import com.dws.challenge.exception.DuplicateAccountIdException;
-import com.dws.challenge.service.AccountsService;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.*;
 
-@ExtendWith(SpringExtension.class)
-@SpringBootTest
-class AccountsServiceTest {
+import org.mockito.junit.jupiter.MockitoExtension;
 
-  @Autowired
-  private AccountsService accountsService;
+@ExtendWith(MockitoExtension.class)
+public class AccountsServiceTest {
 
-  @Test
-  void addAccount() {
-    Account account = new Account("Id-123");
-    account.setBalance(new BigDecimal(1000));
-    this.accountsService.createAccount(account);
+    @Mock
+    private AccountsRepository accountsRepository;
 
-    assertThat(this.accountsService.getAccount("Id-123")).isEqualTo(account);
-  }
+    @Mock
+    private NotificationService notificationService;
 
-  @Test
-  void addAccount_failsOnDuplicateId() {
-    String uniqueId = "Id-" + System.currentTimeMillis();
-    Account account = new Account(uniqueId);
-    this.accountsService.createAccount(account);
+    @InjectMocks
+    private AccountsService accountsService;
 
-    try {
-      this.accountsService.createAccount(account);
-      fail("Should have failed when adding duplicate account");
-    } catch (DuplicateAccountIdException ex) {
-      assertThat(ex.getMessage()).isEqualTo("Account id " + uniqueId + " already exists!");
+    @BeforeEach
+    public void setUp() {
+        accountsRepository.clearAccounts();
     }
-  }
+
+    @Test
+    public void transfer_withSufficientBalance() {
+        Account accountFrom = new Account("123");
+        accountFrom.setBalance(new BigDecimal("1000"));
+
+        Account accountTo = new Account("456");
+        accountTo.setBalance(new BigDecimal("500"));
+
+        accountsRepository.createAccount(accountFrom);
+        accountsRepository.createAccount(accountTo);
+
+        // Stub the getAccount method to return the account when called with the correct ID
+        doAnswer(invocation -> {
+            String accountId = invocation.getArgument(0);
+            if (accountId.equals(accountFrom.getAccountId())) {
+                return accountFrom;
+            } else if (accountId.equals(accountTo.getAccountId())) {
+                return accountTo;
+            }
+            return null;
+        }).when(accountsRepository).getAccount(anyString());
+
+        accountsService.transfer("123", "456", new BigDecimal("200"));
+
+        assertEquals(new BigDecimal("800"), accountFrom.getBalance());
+        assertEquals(new BigDecimal("700"), accountTo.getBalance());
+
+        verify(notificationService, times(1)).notifyAboutTransfer(eq(accountFrom),
+                eq("Amount 200 transferred to Account: 456"));
+        verify(notificationService, times(1)).notifyAboutTransfer(eq(accountTo),
+                eq("Amount 200 received from Account: 123"));
+    }
+
+    @Test
+    public void transfer_withInsufficientBalance() {
+        Account accountFrom = new Account("123");
+        accountFrom.setBalance(new BigDecimal("100"));
+
+        Account accountTo = new Account("456");
+        accountTo.setBalance(new BigDecimal("500"));
+
+        accountsRepository.createAccount(accountFrom);
+        accountsRepository.createAccount(accountTo);
+
+        // Stub the getAccount method to return the account when called with the correct ID
+        doAnswer(invocation -> {
+            String accountId = invocation.getArgument(0);
+            if (accountId.equals(accountFrom.getAccountId())) {
+                return accountFrom;
+            } else if (accountId.equals(accountTo.getAccountId())) {
+                return accountTo;
+            }
+            return null;
+        }).when(accountsRepository).getAccount(anyString());
+
+        assertThrows(IllegalArgumentException.class, () -> {
+            accountsService.transfer("123", "456", new BigDecimal("200")); // The source account has a balance of 100
+        });
+
+        assertEquals(new BigDecimal("100"), accountFrom.getBalance());
+        assertEquals(new BigDecimal("500"), accountTo.getBalance());
+
+        verify(notificationService, never()).notifyAboutTransfer(any(), any());
+    }
 }

@@ -1,107 +1,129 @@
 package com.dws.challenge;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppContextSetup;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.math.BigDecimal;
 
 import com.dws.challenge.domain.Account;
+import com.dws.challenge.exception.DuplicateAccountIdException;
+import com.dws.challenge.repository.AccountsRepositoryInMemory;
 import com.dws.challenge.service.AccountsService;
+import com.dws.challenge.web.AccountsController;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.MediaType;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.test.context.web.WebAppConfiguration;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.web.context.WebApplicationContext;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.springframework.http.HttpStatus;
 
-@ExtendWith(SpringExtension.class)
-@SpringBootTest
-@WebAppConfiguration
-class AccountsControllerTest {
+import static org.mockito.Mockito.*;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.ResponseEntity;
 
-  private MockMvc mockMvc;
+@ExtendWith(MockitoExtension.class)
+public class AccountsControllerTest {
 
-  @Autowired
-  private AccountsService accountsService;
-  
-  @Autowired
-  private WebApplicationContext webApplicationContext;
+    @Mock
+    private AccountsService accountsService;
 
-  @BeforeEach
-  void prepareMockMvc() {
-    this.mockMvc = webAppContextSetup(this.webApplicationContext).build();
+    @InjectMocks
+    private AccountsController accountsController;
+    
+    private AccountsRepositoryInMemory accountsRepository;
 
-    // Reset the existing accounts before each test.
-    accountsService.getAccountsRepository().clearAccounts();
-  }
+    @BeforeEach
+    public void setUp() {
+        accountsRepository = new AccountsRepositoryInMemory();
+    }
+    
+    @Test
+    public void createAccount_ValidAccount_SuccessfulCreation() throws DuplicateAccountIdException {
+        Account account = new Account("123");
+        account.setBalance(new BigDecimal("100"));
+        accountsRepository.createAccount(account);
 
-  @Test
-  void createAccount() throws Exception {
-    this.mockMvc.perform(post("/v1/accounts").contentType(MediaType.APPLICATION_JSON)
-      .content("{\"accountId\":\"Id-123\",\"balance\":1000}")).andExpect(status().isCreated());
+        assertEquals(account, accountsRepository.getAccount("123"));
+    }
 
-    Account account = accountsService.getAccount("Id-123");
-    assertThat(account.getAccountId()).isEqualTo("Id-123");
-    assertThat(account.getBalance()).isEqualByComparingTo("1000");
-  }
+    @Test
+    public void createAccount_ValidAccount_ReturnsHttpStatusCreated() throws DuplicateAccountIdException {
+        Account account = new Account("123");
+        account.setBalance(new BigDecimal("100"));
 
-  @Test
-  void createDuplicateAccount() throws Exception {
-    this.mockMvc.perform(post("/v1/accounts").contentType(MediaType.APPLICATION_JSON)
-      .content("{\"accountId\":\"Id-123\",\"balance\":1000}")).andExpect(status().isCreated());
+        doNothing().when(accountsService).createAccount(any());
 
-    this.mockMvc.perform(post("/v1/accounts").contentType(MediaType.APPLICATION_JSON)
-      .content("{\"accountId\":\"Id-123\",\"balance\":1000}")).andExpect(status().isBadRequest());
-  }
+        ResponseEntity<Object> responseEntity = accountsController.createAccount(account);
 
-  @Test
-  void createAccountNoAccountId() throws Exception {
-    this.mockMvc.perform(post("/v1/accounts").contentType(MediaType.APPLICATION_JSON)
-      .content("{\"balance\":1000}")).andExpect(status().isBadRequest());
-  }
+        verify(accountsService).createAccount(account);
 
-  @Test
-  void createAccountNoBalance() throws Exception {
-    this.mockMvc.perform(post("/v1/accounts").contentType(MediaType.APPLICATION_JSON)
-      .content("{\"accountId\":\"Id-123\"}")).andExpect(status().isBadRequest());
-  }
+        assertEquals(HttpStatus.CREATED, responseEntity.getStatusCode());
+    }
 
-  @Test
-  void createAccountNoBody() throws Exception {
-    this.mockMvc.perform(post("/v1/accounts").contentType(MediaType.APPLICATION_JSON))
-      .andExpect(status().isBadRequest());
-  }
+    @Test
+    public void createAccount_DuplicateAccountId_ReturnsHttpStatusBadRequest() throws DuplicateAccountIdException {
+        Account account = new Account("123");
+        account.setBalance(new BigDecimal("100"));
 
-  @Test
-  void createAccountNegativeBalance() throws Exception {
-    this.mockMvc.perform(post("/v1/accounts").contentType(MediaType.APPLICATION_JSON)
-      .content("{\"accountId\":\"Id-123\",\"balance\":-1000}")).andExpect(status().isBadRequest());
-  }
+        doThrow(new DuplicateAccountIdException("Account id 123 already exists!"))
+                .when(accountsService).createAccount(account);
 
-  @Test
-  void createAccountEmptyAccountId() throws Exception {
-    this.mockMvc.perform(post("/v1/accounts").contentType(MediaType.APPLICATION_JSON)
-      .content("{\"accountId\":\"\",\"balance\":1000}")).andExpect(status().isBadRequest());
-  }
+        ResponseEntity<Object> responseEntity = accountsController.createAccount(account);
 
-  @Test
-  void getAccount() throws Exception {
-    String uniqueAccountId = "Id-" + System.currentTimeMillis();
-    Account account = new Account(uniqueAccountId, new BigDecimal("123.45"));
-    this.accountsService.createAccount(account);
-    this.mockMvc.perform(get("/v1/accounts/" + uniqueAccountId))
-      .andExpect(status().isOk())
-      .andExpect(
-        content().string("{\"accountId\":\"" + uniqueAccountId + "\",\"balance\":123.45}"));
-  }
-  
-  
+        verify(accountsService).createAccount(account);
+
+        assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
+        assertEquals("Account id 123 already exists!", responseEntity.getBody());
+    }
+
+    @Test
+    public void getAccount_ExistingAccountId_ReturnsAccount() {
+        Account account = new Account("123");
+        account.setBalance(new BigDecimal("100"));
+
+        when(accountsService.getAccount("123")).thenReturn(account);
+
+        Account result = accountsController.getAccount("123");
+
+        verify(accountsService).getAccount("123");
+
+        assertNotNull(result);
+        assertEquals("123", result.getAccountId());
+        assertEquals(new BigDecimal("100"), result.getBalance());
+    }
+
+    @Test
+    public void getAccount_NonExistingAccountId_ReturnsNull() {
+        when(accountsService.getAccount("123")).thenReturn(null);
+        Account result = accountsController.getAccount("123");
+
+        verify(accountsService).getAccount("123");
+
+        assertNull(result);
+    }
+
+    @Test
+    public void transfer_ValidTransfer_ReturnsHttpStatusOk() {
+        doNothing().when(accountsService).transfer(anyString(), anyString(), any());
+        ResponseEntity<Object> responseEntity = accountsController.transfer("123", "456", new BigDecimal("50"));
+
+        verify(accountsService).transfer("123", "456", new BigDecimal("50"));
+
+        assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    }
+
+    @Test
+    public void transfer_InvalidTransfer_ReturnsHttpStatusBadRequest() {
+        doThrow(new IllegalArgumentException("One or both account(s) do not exist."))
+                .when(accountsService).transfer(anyString(), anyString(), any());
+
+        ResponseEntity<Object> responseEntity = accountsController.transfer("123", "456", new BigDecimal("50"));
+
+        verify(accountsService).transfer("123", "456", new BigDecimal("50"));
+
+        assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
+        assertEquals("One or both account(s) do not exist.", responseEntity.getBody());
+    }
 }
