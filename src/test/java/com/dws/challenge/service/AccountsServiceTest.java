@@ -1,4 +1,4 @@
-package com.dws.challenge;
+package com.dws.challenge.service;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

@@ -1,4 +1,4 @@
-package com.dws.challenge;
+package com.dws.challenge.web;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
