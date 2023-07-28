@@ -3,6 +3,8 @@ package com.dws.challenge.service;
 import com.dws.challenge.domain.Account;
 import com.dws.challenge.repository.AccountsRepository;
 
+import lombok.Getter;
+
 import java.math.BigDecimal;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,8 +16,12 @@ import java.util.concurrent.locks.ReentrantLock;
 @Service
 public class AccountsService {
 
+	@Getter
 	private final AccountsRepository accountsRepository;
+	
+	@Getter
 	private final NotificationService notificationService;
+	
 	private final Lock lock = new ReentrantLock();
 
 	@Autowired
@@ -30,14 +36,6 @@ public class AccountsService {
 
 	public Account getAccount(String accountId) {
 		return this.accountsRepository.getAccount(accountId);
-	}
-
-	public AccountsRepository getAccountsRepository() {
-		return accountsRepository;
-	}
-
-	public NotificationService getNotificationService() {
-		return notificationService;
 	}
 
 	public void transfer(String accountFromId, String accountToId, BigDecimal amount) {
