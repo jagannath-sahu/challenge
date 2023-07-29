@@ -26,11 +26,8 @@ public class CommonDataProperties {
 
     @Data
     public static class CommonData {
-
         private DataType dataType;
-
         private FunctionData functionData;
-        
         private String name;
     }
 }

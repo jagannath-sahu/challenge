@@ -108,25 +108,36 @@ public class ChallengeApplication implements CommandLineRunner {
 	}
 	
 	public void processData() {
-    	String dbName = commonDataProperties.getCommonData().get(0).getName();
-    	log.info("DB Name : " + dbName);
-    	DataType datatype = commonDataProperties.getCommonData().get(0).getDataType();
-    	log.info(dbName + " BinaryLargeObjec: " + datatype.getBinaryLargeObject());
-    	log.info(dbName + " CharacterLargeObject: " + datatype.getCharacterLargeObject());
-    	FunctionData functionData = commonDataProperties.getCommonData().get(0).getFunctionData();
-    	log.info(dbName + " PositionOfSubString: " + functionData.getPositionOfSubString());
-    	log.info(dbName + " ConvertToString: " + functionData.getConvertToString());
-    	
-    	log.info("************************************");
-    	
-    	dbName = commonDataProperties.getCommonData().get(1).getName();
-    	log.info("DB Name : " + dbName);
-    	DataType datatype1 = commonDataProperties.getCommonData().get(1).getDataType();
-    	log.info(dbName + " BinaryLargeObjec: " + datatype1.getBinaryLargeObject());
-    	log.info(dbName + " CharacterLargeObject: " + datatype1.getCharacterLargeObject());
-    	FunctionData functionData1 = commonDataProperties.getCommonData().get(1).getFunctionData();
-    	log.info(dbName + " PositionOfSubString: " + functionData1.getPositionOfSubString());
-    	log.info(dbName + " ConvertToString: " + functionData1.getConvertToString());
+//    	String dbName = commonDataProperties.getCommonData().get(0).getName();
+//    	log.info("DB Name : " + dbName);
+//    	DataType datatype = commonDataProperties.getCommonData().get(0).getDataType();
+//    	log.info(dbName + " BinaryLargeObjec: " + datatype.getBinaryLargeObject());
+//    	log.info(dbName + " CharacterLargeObject: " + datatype.getCharacterLargeObject());
+//    	FunctionData functionData = commonDataProperties.getCommonData().get(0).getFunctionData();
+//    	log.info(dbName + " PositionOfSubString: " + functionData.getPositionOfSubString());
+//    	log.info(dbName + " ConvertToString: " + functionData.getConvertToString());
+//    	
+//    	log.info("************************************");
+//    	
+//    	dbName = commonDataProperties.getCommonData().get(1).getName();
+//    	log.info("DB Name : " + dbName);
+//    	DataType datatype1 = commonDataProperties.getCommonData().get(1).getDataType();
+//    	log.info(dbName + " BinaryLargeObjec: " + datatype1.getBinaryLargeObject());
+//    	log.info(dbName + " CharacterLargeObject: " + datatype1.getCharacterLargeObject());
+//    	FunctionData functionData1 = commonDataProperties.getCommonData().get(1).getFunctionData();
+//    	log.info(dbName + " PositionOfSubString: " + functionData1.getPositionOfSubString());
+//    	log.info(dbName + " ConvertToString: " + functionData1.getConvertToString());
+		
+		for (int i = 0; i < commonDataProperties.getCommonData().size(); i++) {
+		    String dbName = commonDataProperties.getCommonData().get(i).getName();
+		    log.info("DB Name : " + dbName);
+		    DataType datatype = commonDataProperties.getCommonData().get(i).getDataType();
+		    log.info(dbName + " BinaryLargeObject: " + datatype.getBinaryLargeObject());
+		    log.info(dbName + " CharacterLargeObject: " + datatype.getCharacterLargeObject());
+		    FunctionData functionData = commonDataProperties.getCommonData().get(i).getFunctionData();
+		    log.info(dbName + " PositionOfSubString: " + functionData.getPositionOfSubString());
+		    log.info(dbName + " ConvertToString: " + functionData.getConvertToString());
+		    log.info("************************************");
+		}
     }
-
 }
