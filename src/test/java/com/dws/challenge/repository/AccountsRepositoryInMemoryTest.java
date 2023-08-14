@@ -6,13 +6,18 @@ import java.math.BigDecimal;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 import com.dws.challenge.exception.DuplicateAccountIdException;
+import com.dws.challenge.service.watcher.CommonServiceWatcher;
 import com.dws.challenge.domain.*;
 
 public class AccountsRepositoryInMemoryTest {
 
     private AccountsRepositoryInMemory accountsRepository;
+    
+    @RegisterExtension
+    static CommonServiceWatcher testWatcher = new CommonServiceWatcher();
 
     @BeforeEach
     public void setUp() {
