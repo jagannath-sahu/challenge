@@ -10,11 +10,12 @@ import com.dws.challenge.domain.Account;
 import com.dws.challenge.exception.DuplicateAccountIdException;
 import com.dws.challenge.repository.AccountsRepositoryInMemory;
 import com.dws.challenge.service.AccountsService;
-import com.dws.challenge.web.AccountsController;
+import com.dws.challenge.service.watcher.CommonServiceWatcher;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.http.HttpStatus;
@@ -33,6 +34,9 @@ public class AccountsControllerTest {
     private AccountsController accountsController;
     
     private AccountsRepositoryInMemory accountsRepository;
+    
+    @RegisterExtension
+    static CommonServiceWatcher testWatcher = new CommonServiceWatcher();
 
     @BeforeEach
     public void setUp() {

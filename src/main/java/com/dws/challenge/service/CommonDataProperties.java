@@ -2,8 +2,7 @@ package com.dws.challenge.service;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
-import com.dws.challenge.domain.DataType;
-import com.dws.challenge.domain.FunctionData;
+import com.dws.challenge.sql.converter.dto.*;
 
 import lombok.Data;
 

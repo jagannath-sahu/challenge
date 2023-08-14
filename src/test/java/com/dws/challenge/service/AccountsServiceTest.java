@@ -3,12 +3,12 @@ package com.dws.challenge.service;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 
 import com.dws.challenge.repository.AccountsRepository;
-import com.dws.challenge.service.AccountsService;
-import com.dws.challenge.service.NotificationService;
+import com.dws.challenge.service.watcher.CommonServiceWatcher;
 import com.dws.challenge.domain.Account;
 
 import java.math.BigDecimal;
@@ -30,6 +30,9 @@ public class AccountsServiceTest {
 
     @InjectMocks
     private AccountsService accountsService;
+    
+    @RegisterExtension
+    static CommonServiceWatcher testWatcher = new CommonServiceWatcher();
 
     @BeforeEach
     public void setUp() {
